@@ -2,9 +2,15 @@ import { Button } from "@/src/components/ui/Button";
 import { Text } from "@/src/components/ui/Text/Text";
 import { CustomInput } from "@/src/components/ui/TextInput";
 import { theme } from "@/src/constants/theme";
+import { SignInResponse } from "@/src/types/auth";
+
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Image, Pressable, Switch, View } from "react-native";
+
+import { saveToken } from "@/src/storage/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import { styles } from "./styles";
 
 export const LoginScreen = () => {
@@ -12,8 +18,37 @@ export const LoginScreen = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
 
-  const handleLogin = () => {
-    // TODO: authService.login({ email, password })
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    try {
+      const authResponse = await axios.post<SignInResponse>(
+        "http://192.168.0.10:8000/api/v1/auth/signin",
+        {
+          email,
+          password,
+        },
+        {
+          headers: {
+            "user-agent": "mobile-app",
+            "x-fingerprint": "expo-device-123",
+            "x-api-key": "12",
+          },
+        },
+      );
+
+      const { accessToken, refreshToken } = authResponse.data;
+
+      // СОХРАНЯЕМ
+      await AsyncStorage.setItem("accessToken", accessToken);
+      await AsyncStorage.setItem("refreshToken", refreshToken);
+      await saveToken(accessToken);
+
+      router.replace("/home");
+      router.replace("/home");
+    } catch (error: any) {
+      console.log(error?.response?.data);
+    }
   };
 
   return (
@@ -57,30 +92,30 @@ export const LoginScreen = () => {
           }}
           thumbColor="#ffffff"
         />
+
         <Text variant="body" style={styles.rememberLabel}>
           Запомнить меня
         </Text>
-        <Pressable
-          onPress={() => {
-            /* TODO */
-          }}
-          hitSlop={8}
-        >
+
+        <Pressable hitSlop={8}>
           <Text variant="body" color={theme.colors.text.secondary}>
             Забыли пароль?
           </Text>
         </Pressable>
       </View>
 
-      {/* Кнопка входа */}
-      <Button title="Войти" onPress={handleLogin} style={styles.loginBtn} />
+      <Button
+        title={loading ? "Загрузка..." : "Войти"}
+        onPress={handleLogin}
+        style={styles.loginBtn}
+      />
 
-      {/* Ссылка на регистрацию — прибита к низу через flex: 1 в footer */}
       <View style={styles.footer}>
         <Text variant="body" color={theme.colors.text.primary}>
-          Нет аккаунта?{"  "}
+          Нет аккаунта?{" "}
         </Text>
-        <Pressable onPress={() => router.push("/(auth)/register")} hitSlop={8}>
+
+        <Pressable onPress={() => router.push("/register")} hitSlop={8}>
           <Text variant="body" color={theme.colors.accent.strong}>
             Создать
           </Text>

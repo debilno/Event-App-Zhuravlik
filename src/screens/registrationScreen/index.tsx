@@ -6,14 +6,18 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Image, Pressable, View } from "react-native";
 import { styles } from "./styles";
+import axios from "axios";
 
 export const RegistrationScreen = () => {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
 
+
   const handleRegister = () => {
     // TODO: authService.login({ email, password })
+
+    axios.post("")
   };
   return (
     <View style={styles.root}>
@@ -68,9 +72,6 @@ export const RegistrationScreen = () => {
         title="Зарегистрироваться"
         onPress={handleRegister}
         style={styles.registerBtn}
-
-
-        
       />
 
       <View style={styles.footer}>
